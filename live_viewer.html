@@ -1,0 +1,212 @@
+<html>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+const hash = urlParams.get('token');
+//hash = "0xd9134c11cd5ed9798ea0811364d63bd850c69c5d13383c9983ade39847e9ea86";
+const hashPairs = [];
+for (let j = 0; j < 32; j++) {
+  hashPairs.push(hash.slice(2 + (j * 2), 4 + (j * 2)));
+}
+
+// Parse the hash pairs into ints. Hash pairs are base 16 so "ec" becomes 236.
+// Each pair will become a value ranging from 0 - 255
+const decPairs = hashPairs.map(x => {
+  return parseInt(x, 16);
+});
+
+function setup() {
+  const smallerDimension = windowWidth < windowHeight ? windowWidth : windowHeight;
+  createCanvas(smallerDimension, smallerDimension);
+}
+
+class Circle {
+  constructor(x, y, rad, x_speed, y_speed, x_direction, y_direction, stroke_weight, color) {
+    this.pos = createVector(x, y);
+    this.radius = rad;
+    this.x_direction = x_direction
+    this.y_direction = y_direction
+    this.x_speed = x_speed
+    this.y_speed = y_speed
+    this.col = color;
+    this.stroke_weight = stroke_weight
+  }
+  show() {
+    noFill();
+    stroke(this.col);
+    strokeWeight(this.stroke_weight);
+    circle(this.pos.x, this.pos.y, this.radius);
+  }
+  update() {
+    
+    this.pos.x = this.pos.x + this.x_speed * this.x_direction;
+    this.pos.y = this.pos.y + this.y_speed * this.y_direction;
+
+    if (this.pos.x > width || this.pos.x < 0) {
+      this.x_direction *= -1;
+    }
+    
+    if (this.pos.y > height || this.pos.y < 0) {
+      this.y_direction *= -1;
+    }
+    this.show();
+  }
+}
+let circles = [];
+
+let palettes = 
+[["#13bf99", "#41bf13", "#bf132f", "#bf6613"],
+["#13bf57", "#bf4913", "#1ebf13", "#bf4113"],
+["#13bf2f", "#13bfbc", "#bf1369", "#13bf1e"],
+["#1338bf", "#13bf13", "#bfa213", "#1357bf"],
+["#a2bf13", "#bf1385", "#3ebf13", "#136cbf"],
+["#13a5bf", "#13bf41", "#bf7d13", "#bf138e"],
+["#134cbf", "#bf136e", "#bf13ae", "#6cbf13"],
+["#13bf49", "#bf5d13", "#85bf13", "#13bf4f"],
+["#abbf13", "#80bf13", "#bfa213", "#1318bf"],
+["#13bf13", "#66bf13", "#bfa813", "#9713bf"],
+["#b613bf", "#13bcbf", "#13bf15", "#4cbf13"],
+["#bfa813", "#bf1315", "#bf6e13", "#41bf13"],
+["#bfb613", "#13bfb0", "#13bf13", "#5213bf"],
+["#43bf13", "#1ebf13", "#13bf88", "#bf5713"],
+["#1357bf", "#bf1374", "#bf7413", "#bf1813"],
+["#13bf24", "#bfab13", "#bf4113", "#bf9413"],
+["#bf13b3", "#6e13bf", "#13bf2c", "#bf6e13"],
+["#bf1321", "#46bf13", "#1349bf", "#bf1313"],
+["#bf3b13", "#138ebf", "#b0bf13", "#4fbf13"],
+["#5d13bf", "#abbf13", "#bf5d13", "#13bf8b"],
+["#a513bf", "#bf4913", "#13bf99", "#bf4313"],
+["#1363bf", "#1357bf", "#bf9c13", "#bf2713"],
+["#4313bf", "#bf1346", "#1313bf", "#2713bf"],
+["#bfa213", "#13b3bf", "#1357bf", "#13bf8e"],
+["#66bf13", "#13bf80", "#6cbf13", "#bf136e"],
+["#8313bf", "#3813bf", "#bf139f", "#bf13a2"],
+["#bf138b", "#bf131b", "#13bf99", "#5513bf"],
+["#138bbf", "#13bf5d", "#bf131b", "#13bf5d"],
+["#bf1b13", "#bf132f", "#abbf13", "#b313bf"],
+["#bf1346", "#bf133e", "#b6bf13", "#2fbf13"],
+["#bf1377", "#131bbf", "#137dbf", "#13bf99"],
+["#13bf57", "#bf3213", "#74bf13", "#91bf13"],
+["#bf132c", "#13bf9c", "#bf132c", "#6c13bf"],
+["#4113bf", "#77bf13", "#8ebf13", "#bf1332"],
+["#1315bf", "#bf133b", "#bf13ab", "#b013bf"],
+["#43bf13", "#6313bf", "#6c13bf", "#13bf38"],
+["#1e13bf", "#7413bf", "#bf9c13", "#132abf"],
+["#1374bf", "#bf5d13", "#27bf13", "#bf5513"],
+["#13b9bf", "#5213bf", "#aebf13", "#13bfa5"],
+["#bf1369", "#8513bf", "#88bf13", "#13bf18"],
+["#1b13bf", "#13bf2a", "#13bf88", "#bfa213"],
+["#13bfae", "#91bf13", "#21bf13", "#bf6313"],
+["#4f13bf", "#13bf15", "#8ebf13", "#bf1399"],
+["#bf6313", "#6cbf13", "#bf1388", "#13bf5a"],
+["#bf5713", "#5213bf", "#13bf1b", "#13bf38"],
+["#bf1343", "#a813bf", "#ae13bf", "#bf1399"],
+["#7713bf", "#13bfb0", "#13bf6c", "#13bf5d"],
+["#13bf18", "#13bf63", "#85bf13", "#bf9f13"],
+["#bf8513", "#bf8e13", "#bf5d13", "#13bf88"],
+["#1374bf", "#13bf41", "#5213bf", "#49bf13"],
+["#1388bf", "#bf137a", "#bf1335", "#135abf"],
+["#4913bf", "#13bf15", "#13bf9f", "#6013bf"],
+["#bf1b13", "#bfa513", "#13bf60", "#bf4913"],
+["#13bf2a", "#bf13bc", "#13bf2f", "#1363bf"],
+["#6c13bf", "#2a13bf", "#13bf2c", "#13bf1b"],
+["#bf13a8", "#5dbf13", "#7d13bf", "#bf13b6"],
+["#bf133b", "#bf1349", "#1380bf", "#b313bf"],
+["#1813bf", "#13bf43", "#49bf13", "#2a13bf"],
+["#5a13bf", "#bf1338", "#bf4f13", "#5abf13"],
+["#b3bf13", "#bf13b9", "#bf133e", "#bf9413"],
+["#133bbf", "#bf5a13", "#bf133e", "#ab13bf"],
+["#1360bf", "#7abf13", "#13bf9f", "#1b13bf"],
+["#1394bf", "#6e13bf", "#7413bf", "#13bfbc"],
+["#7713bf", "#1335bf", "#13bfb3", "#ae13bf"],
+["#bfab13", "#bf5513", "#133ebf", "#7113bf"],
+["#49bf13", "#bf1374", "#a513bf", "#13bf69"],
+["#bfb913", "#3813bf", "#bf136e", "#8e13bf"],
+["#1343bf", "#13bf15", "#bf2113", "#bfb613"],
+["#63bf13", "#38bf13", "#bf5d13", "#2abf13"],
+["#2113bf", "#bf1357", "#bf13a8", "#bf6913"],
+["#5a13bf", "#1ebf13", "#13bf83", "#80bf13"],
+["#13bfb3", "#13bf8b", "#13bf8b", "#7dbf13"],
+["#13bf74", "#bf4913", "#bf1335", "#bfa513"],
+["#bf13ab", "#1366bf", "#bf1377", "#13bf60"],
+["#137abf", "#13bf7d", "#bfb313", "#132abf"],
+["#134cbf", "#bf7d13", "#bf1357", "#13bf6c"],
+["#9413bf", "#b013bf", "#bf137d", "#bf1513"],
+["#4613bf", "#bf1388", "#13a5bf", "#bf139f"],
+["#136ebf", "#bf1391", "#a813bf", "#83bf13"],
+["#1399bf", "#bf9c13", "#bf5213", "#bfa513"],
+["#bf1b13", "#b6bf13", "#134fbf", "#1394bf"],
+["#7413bf", "#b613bf", "#13bf21", "#bf4913"],
+["#bf9413", "#bf4f13", "#bf1383", "#13bf4c"],
+["#7113bf", "#bfb013", "#bf8813", "#3bbf13"],
+["#13bf77", "#1352bf", "#13bf13", "#13bf4c"],
+["#13bfb9", "#bf4c13", "#7dbf13", "#8013bf"],
+["#bf133e", "#13bf97", "#bf132c", "#b913bf"],
+["#9c13bf", "#3bbf13", "#bf1338", "#8813bf"],
+["#bf1513", "#5513bf", "#bf7a13", "#bf1341"],
+["#13bfb9", "#1388bf", "#bf135d", "#49bf13"],
+["#1341bf", "#13bf6c", "#13b9bf", "#5513bf"],
+["#13bfa5", "#24bf13", "#bf1391", "#bf132c"],
+["#3ebf13", "#1374bf", "#b0bf13", "#13bf46"],
+["#bf1349", "#13bf66", "#131ebf", "#1391bf"],
+["#85bf13", "#bf1332", "#13bf9c", "#bf8b13"],
+["#1385bf", "#138ebf", "#bf1352", "#bf4113"],
+["#1315bf", "#bf2113", "#13bf77", "#7413bf"],
+["#bf8513", "#1513bf", "#13bfb9", "#1b13bf"],
+["#bfab13", "#bf13bf", "#ae13bf", "#1371bf"],
+["#bf1397", "#1380bf", "#2413bf", "#38bf13"]]
+
+function scale_num(number, inMin, inMax, outMin, outMax) {
+    return (number - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+
+  let colors = palettes[decPairs[0] % palettes.length];
+  num_horizontal_circles = decPairs[1] % 3 + 1;
+  let orientations = [];
+  while (num_horizontal_circles-- > 0) {
+    orientations.push("h")
+  }
+  while (orientations.length < 4) {
+    orientations.push("v")
+  }
+
+  circle_num = 0;
+  for (let i = 0; i < 4; i++) {
+    let r_max = scale_num(decPairs[2 + circle_num], 0, 255, width, width * 1.3);
+    let r_inc = scale_num(decPairs[6 + circle_num], 0, 255, 10, 15);
+    let x_pos = Math.round(scale_num(decPairs[10 + circle_num], 0, 255, width * 0.1, width * 0.9));
+    let speed = decPairs[14 + circle_num] % 4 + 1;
+    let direction = decPairs[18 + circle_num] % 1 ? 1 : -1;
+    let stroke_weight = decPairs[22 + circle_num] % 3 + 1
+    if (orientations[circle_num] == 'h') {
+      x_speed = speed;
+      y_speed = 0;
+      x_direction = direction;
+      y_direction = 0;
+    } else {
+      y_speed = speed;
+      x_speed = 0;
+      y_direction = direction;
+      x_direction = 0;
+    }
+    for (let r = 0; r <= r_max; r += r_inc) {
+      circles.push(new Circle(x_pos, height/2, r, x_speed, y_speed, x_direction, y_direction, stroke_weight, colors[circle_num]));
+    }
+    circle_num++;
+  }
+}
+
+function draw() {
+  background(0);
+  for (let c of circles) {
+    c.update();
+  }
+}
+</script>
+<body>
+</body>
+</html>
