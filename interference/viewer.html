@@ -2,6 +2,8 @@
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
 <script>
+const urlParams = new URLSearchParams(window.location.search);
+const hash = urlParams.get('token');
 const hashPairs=[];for(let j=0;j<32;j++){hashPairs.push(hash.slice(2+(j*2),4+(j*2)));}
 const decPairs=hashPairs.map(x=>{return parseInt(x,16);});function setup(){const smallerDimension=windowWidth<windowHeight?windowWidth:windowHeight;createCanvas(smallerDimension,smallerDimension);}
 class Shape{constructor(x,y,size,x_speed,y_speed,x_direction,y_direction,stroke_weight,color){this.pos=createVector(x,y);this.size=size;this.x_direction=x_direction
